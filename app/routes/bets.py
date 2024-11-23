@@ -1,60 +1,57 @@
 from flask import Blueprint, request, jsonify
 from app.models import User, Event, Bet, db
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from events import moderator_required
 
 bp = Blueprint('bets', __name__, url_prefix='/bets')
 
 
 @bp.route('/place', methods=['POST'])
+@jwt_required()
 def place_bet():
+    current_user = get_jwt_identity()
     data = request.get_json()
-    required_fields = ['usuario_id', 'evento_id', 'valor', 'tipo_aposta']
 
+    if not current_user:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+
+    required_fields = ['evento_id', 'valor', 'tipo_aposta']
     if not data or not all(key in data for key in required_fields):
         return jsonify({'error': 'Dados incompletos'}), 400
 
     try:
-        usuario = User.query.get(data['usuario_id'])
-        evento = Event.query.get(data['evento_id'])
         valor = float(data['valor'])
-        tipo_aposta = data['tipo_aposta']
+        evento = Event.query.get(data['evento_id'])
 
-        if not usuario:
-            return jsonify({'error': 'Usuário não encontrado'}), 404
-        if not evento:
-            return jsonify({'error': 'Evento não encontrado'}), 404
-        if valor <= 0:
-            return jsonify({'error': 'O valor deve ser maior que zero'}), 400
-        if evento.status != 'aprovado':
-            return jsonify({'error': 'Apostas só são permitidas em eventos aprovados'}), 400
-        if usuario.saldo < valor:
-            return jsonify({'error': 'Saldo insuficiente'}), 400
-        if tipo_aposta not in ['sim', 'não']:
-            return jsonify({'error': 'Tipo de aposta inválido'}), 400
+        if not evento or evento.status != 'aprovado':
+            return jsonify({'error': 'Evento não encontrado ou não aprovado'}), 404
 
+        if valor <= 0 or current_user['saldo'] < valor:
+            return jsonify({'error': 'Saldo insuficiente ou valor inválido'}), 400
 
-        usuario.saldo -= valor
-
+        user = User.query.get(current_user['id'])
+        user.saldo -= valor
 
         aposta = Bet(
-            usuario_id=usuario.id,
+            usuario_id=current_user['id'],
             evento_id=evento.id,
             valor=valor,
-            tipo_aposta=tipo_aposta
+            tipo_aposta=data['tipo_aposta']
         )
         db.session.add(aposta)
         db.session.commit()
-
-        return jsonify({'message': 'Aposta realizada com sucesso!', 'novo_saldo': usuario.saldo}), 200
+        return jsonify({'message': 'Aposta realizada com sucesso!'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
 @bp.route('/finish', methods=['POST'])
+@moderator_required
 def finish_event():
     data = request.get_json()
     required_fields = ['evento_id', 'resultado']
 
-
+    # Verificar campos obrigatórios
     if not data or not all(key in data for key in required_fields):
         return jsonify({'error': 'Dados incompletos'}), 400
 
