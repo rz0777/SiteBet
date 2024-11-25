@@ -1,9 +1,8 @@
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
+from app import db
 
-db = SQLAlchemy()
 
-# Modelo de Usuário
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -18,7 +17,7 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.nome}>'
 
-# Modelo de Evento
+
 class Event(db.Model):
     __tablename__ = 'events'
 
@@ -29,8 +28,8 @@ class Event(db.Model):
     data_inicio_apostas = db.Column(db.DateTime, nullable=False)
     data_fim_apostas = db.Column(db.DateTime, nullable=False)
     data_ocorrencia = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(20), default='pendente')  # pendente, aprovado, rejeitado
-    resultado = db.Column(db.String(10), default='indefinido')  # sim, não, indefinido
+    status = db.Column(db.String(20), default='pendente')  
+    resultado = db.Column(db.String(10), default='indefinido')  
     criado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     criador = db.relationship('User', backref=db.backref('eventos', lazy=True))
@@ -38,7 +37,7 @@ class Event(db.Model):
     def __repr__(self):
         return f'<Event {self.titulo}>'
 
-# Modelo de Aposta
+
 class Bet(db.Model):
     __tablename__ = 'bets'
 
@@ -46,21 +45,20 @@ class Bet(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evento_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
     valor = db.Column(db.Float, nullable=False)
-    tipo_aposta = db.Column(db.String(10), nullable=False)  # sim ou não
-
+    tipo_aposta = db.Column(db.String(10), nullable=False)  
     usuario = db.relationship('User', backref=db.backref('apostas', lazy=True))
     evento = db.relationship('Event', backref=db.backref('apostas', lazy=True))
 
     def __repr__(self):
         return f'<Bet User {self.usuario_id} Event {self.evento_id}>'
 
-# Modelo de Transação
+
 class Transaction(db.Model):
     __tablename__ = 'transactions'
 
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    tipo = db.Column(db.String(20), nullable=False)  # adicionar, sacar
+    tipo = db.Column(db.String(20), nullable=False)  
     valor = db.Column(db.Float, nullable=False)
     data = db.Column(db.DateTime, default=datetime.utcnow)
     detalhes = db.Column(db.String(150))

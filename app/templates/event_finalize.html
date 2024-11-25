@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Finalizar Evento{% endblock %}
+
+{% block content %}
+<h2>Finalizar Evento</h2>
+<p><strong>Evento:</strong> {{ event.titulo }}</p>
+
+{% if g.current_user and g.current_user.is_moderador %}
+    <h3>Defina o Resultado</h3>
+    <form id="finalizeForm">
+        <div class="mb-3">
+            <label for="result" class="form-label">Resultado</label>
+            <select class="form-select" id="result" required>
+                <option value="sim">Sim</option>
+                <option value="não">Não</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success">Finalizar Evento</button>
+    </form>
+{% else %}
+    <p>Somente moderadores podem finalizar eventos.</p>
+{% endif %}
+
+<script>
+document.getElementById("finalizeForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const result = document.getElementById("result").value;
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+        alert("Token de autenticação não encontrado. Por favor, faça login.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/events/finalize/${eventId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            credentials:"include",
+            body: JSON.stringify({ resultado: result })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("Evento finalizado com sucesso!");
+        } else {
+            alert(data.error || "Erro ao finalizar evento.");
+        }
+    } catch (err) {
+        alert("Erro ao conectar com o servidor.");
+    }
+});
+</script>
+
+{% endblock %}

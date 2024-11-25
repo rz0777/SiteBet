@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Evento{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>Criar Novo Evento</h2>
+        <form id="createEventForm">
+            <div class="mb-3">
+                <label for="titulo" class="form-label">Título</label>
+                <input type="text" class="form-control" id="titulo" maxlength="50" required>
+            </div>
+            <div class="mb-3">
+                <label for="descricao" class="form-label">Descrição</label>
+                <textarea class="form-control" id="descricao" maxlength="150" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="valorCota" class="form-label">Valor da Cota (R$)</label>
+                <input type="number" class="form-control" id="valorCota" min="1" step="0.01" required>
+            </div>
+            <div class="mb-3">
+                <label for="dataInicio" class="form-label">Início das Apostas</label>
+                <input type="datetime-local" class="form-control" id="dataInicio" required>
+            </div>
+            <div class="mb-3">
+                <label for="dataFim" class="form-label">Fim das Apostas</label>
+                <input type="datetime-local" class="form-control" id="dataFim" required>
+            </div>
+            <div class="mb-3">
+                <label for="dataOcorrencia" class="form-label">Data do Evento</label>
+                <input type="date" class="form-control" id="dataOcorrencia" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Criar Evento</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById("createEventForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const titulo = document.getElementById("titulo").value;
+    const descricao = document.getElementById("descricao").value;
+    const valorCota = parseFloat(document.getElementById("valorCota").value);
+    const dataInicio = document.getElementById("dataInicio").value;
+    const dataFim = document.getElementById("dataFim").value;
+    const dataOcorrencia = document.getElementById("dataOcorrencia").value;
+
+
+    console.log({
+        titulo,
+        descricao,
+        valor_cota: valorCota,
+        data_inicio_apostas: dataInicio,
+        data_fim_apostas: dataFim,
+        data_ocorrencia: dataOcorrencia
+    });
+
+
+
+    try {
+        const response = await fetch('/events/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+            titulo,
+            descricao,
+            valor_cota: valorCota,
+            data_inicio_apostas: dataInicio,
+            data_fim_apostas: dataFim,
+            data_ocorrencia: dataOcorrencia
+            })
+        });
+
+    console.log("Status da resposta:", response.status);  
+    const data = await response.json();
+    if (response.ok) {
+        alert("Evento criado com sucesso!");
+        window.location.href = "/events"; 
+    } else {
+        alert(data.error || "Erro ao criar o evento.");
+    }
+    } catch (err) {
+        alert(data.error , "Erro ao conectar com o servidor.");
+    }
+});
+</script>
+{% endblock %}

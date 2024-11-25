@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Eventos{% endblock %}
+{% block content %}
+<h2>Eventos Disponíveis</h2>
+
+
+<div class="mb-3">
+    <input type="text" id="searchInput" class="form-control" placeholder="Pesquise por título ou descrição..." oninput="searchEvents()">
+</div>
+
+
+<div id="event-list" class="list-group">
+   
+</div>
+
+<script>
+async function fetchEvents() {
+            try {
+                const response = await fetch('/events/list');
+                const result = await response.json();
+
+                if (response.ok) {
+                    const events = result.events;
+                    const eventList = document.getElementById('event-list');
+                    if (events && events.length > 0) {
+                        events.forEach(event => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `
+                                Título: ${event.titulo} - Status: ${event.status} 
+                                <a href="/events/${event.id}">Ver Detalhes</a>
+                                | <a href="/events/finalize/${event.id}">Finalizar Evento</a>
+                            `;
+                            eventList.appendChild(li);
+                        });
+                    } else {
+                        eventList.innerHTML = "<li>Nenhum evento encontrado</li>";
+                    }
+                } else {
+                    alert('Erro ao carregar eventos');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar eventos:', error);
+                alert('Erro ao carregar eventos');
+            }
+        }
+
+        window.onload = function() {
+            fetchEvents(); 
+        };
+
+function displayEvents(events) {
+    const eventList = document.getElementById("eventList");
+    eventList.innerHTML = ""; 
+
+    events.forEach(event => {
+        const eventItem = document.createElement("div");
+        eventItem.classList.add("list-group-item");
+        eventItem.innerHTML = `
+            <h5>${event.titulo}</h5>
+            <p>${event.descricao}</p>
+            <p><strong>Data:</strong> ${event.data_ocorrencia}</p>
+            <button class="btn btn-primary" onclick="viewDetails(${event.id})">Ver Detalhes</button>
+        `;
+        eventList.appendChild(eventItem);
+    });
+}
+
+function searchEvents() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    const filteredEvents = allEvents.filter(event =>
+        event.titulo.toLowerCase().includes(query) || event.descricao.toLowerCase().includes(query)
+    );
+    displayEvents(filteredEvents); 
+}
+
+function viewDetails(eventId) {
+    window.location.href = `/events/details/${eventId}`;
+}
+
+
+</script>
+{% endblock %}

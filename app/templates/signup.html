@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <h2>Cadastro</h2>
+        <form id="signupForm">
+            <div class="mb-3">
+                <label for="nome" class="form-label">Nome</label>
+                <input type="text" class="form-control" id="nome" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="data_nascimento" class="form-label">Data de Nascimento</label>
+                <input type="date" class="form-control" id="data_nascimento" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Cadastrar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById("signupForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById("nome").value;
+    const email = document.getElementById("email").value;
+    const senha = document.getElementById("password").value;
+    const data_nascimento = document.getElementById("data_nascimento").value;
+
+    try {
+        const response = await fetch('/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, email, senha, data_nascimento })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("Cadastro realizado com sucesso!");
+            window.location.href = "/auth/login";
+        } else {
+            alert(data.error || "Erro ao realizar cadastro.");
+        }
+    } catch (err) {
+        alert("Erro ao conectar com o servidor.");
+    }
+});
+</script>
+{% endblock %}

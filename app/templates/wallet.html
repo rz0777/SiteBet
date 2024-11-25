@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Carteira{% endblock %}
+{% block content %}
+<h2>Minha Carteira</h2>
+<p><strong>Saldo Atual:</strong> R$ <span id="walletBalance">0.00</span></p>
+
+<h3>Histórico de Transações</h3>
+<ul id="transactionList" class="list-group"></ul>
+
+<h3>Adicionar Fundos</h3>
+<form id="addFundsForm">
+    <div class="mb-3">
+        <label for="addAmount" class="form-label">Valor (R$)</label>
+        <input type="number" class="form-control" id="addAmount" required>
+    </div>
+    <button type="submit" class="btn btn-success">Adicionar</button>
+</form>
+
+<h3>Sacar Fundos</h3>
+<form id="withdrawFundsForm">
+    <div class="mb-3">
+        <label for="withdrawAmount" class="form-label">Valor (R$)</label>
+        <input type="number" class="form-control" id="withdrawAmount" required>
+    </div>
+    <button type="submit" class="btn btn-danger">Sacar</button>
+</form>
+
+<script>
+async function loadWallet() {
+    try {
+        const response = await fetch('/wallet/transactions', {
+            method: 'GET',
+            credentials: "include" 
+        });
+        const transactions = await response.json();
+
+        const totalBalance = transactions.reduce(
+            (acc, trans) => trans.tipo === 'adicionar' ? acc + trans.valor : acc - trans.valor, 0
+        );
+        document.getElementById("walletBalance").innerText = totalBalance.toFixed(2);
+
+        const transactionList = document.getElementById("transactionList");
+        transactionList.innerHTML = "";
+        transactions.forEach(trans => {
+            const item = document.createElement("li");
+            item.classList.add("list-group-item");
+            item.innerText = `${trans.tipo === 'adicionar' ? 'Adicionado' : 'Sacado'} R$ ${trans.valor} - ${trans.detalhes}`;
+            transactionList.appendChild(item);
+        });
+    } catch (err) {
+        alert("Erro ao carregar a carteira.");
+    }
+}
+
+
+document.getElementById("addFundsForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const addAmount = parseFloat(document.getElementById("addAmount").value);
+    try {
+        const response = await fetch('/wallet/addFunds', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: "include", 
+            body: JSON.stringify({ valor: addAmount })
+        });
+        if (response.ok) {
+            alert("Fundos adicionados com sucesso!");
+            loadWallet(); 
+        } else {
+            alert("Erro ao adicionar fundos.");
+        }
+    } catch (err) {
+        alert("Erro ao conectar com o servidor.");
+    }
+});
+
+
+document.getElementById("withdrawFundsForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const withdrawAmount = parseFloat(document.getElementById("withdrawAmount").value);
+    try {
+        const response = await fetch('/wallet/withdrawFunds', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+            },
+            credentials: "include", 
+            body: JSON.stringify({ valor: withdrawAmount, conta: "Conta XYZ" })
+        });
+        if (response.ok) {
+            alert("Saque realizado com sucesso!");
+            loadWallet();  
+        } else {
+            alert("Erro ao sacar fundos.");
+        }
+    } catch (err) {
+        alert("Erro ao conectar com o servidor.");
+    }
+});
+
+
+loadWallet();
+</script>
+{% endblock %}

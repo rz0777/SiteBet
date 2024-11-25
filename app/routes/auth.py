@@ -1,11 +1,19 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, make_response
 from app.models import User, db
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token
-from datetime import timedelta
+from flask_jwt_extended import jwt_required, create_access_token
+from datetime import timedelta, datetime
 
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+@bp.route('/login')
+def login_view():
+    return render_template('login.html')
+
+@bp.route('/signup')
+def signup_view():
+    return render_template('signup.html')
 
 @bp.route('/signup', methods=['POST'])
 def signup():
@@ -17,11 +25,12 @@ def signup():
         return jsonify({'error': 'E-mail já cadastrado'}), 400
 
     hashed_password = generate_password_hash(data['senha'])
+    data_nascimento_str = datetime.strptime(data['data_nascimento'], '%Y-%m-%d').date()
     user = User(
         nome=data['nome'],
         email=data['email'],
         senha=hashed_password,
-        data_nascimento=data['data_nascimento']
+        data_nascimento=data_nascimento_str
     )
     db.session.add(user)
     db.session.commit()
@@ -39,11 +48,23 @@ def login():
         return jsonify({'error': 'E-mail ou senha inválidos'}), 401
 
     token = create_access_token(
-        identity={'id': user.id, 'email': user.email, 'is_moderador': user.is_moderador},
+        identity=str(user.id),
         expires_delta=timedelta(hours=1)
     )
 
-    return jsonify({'message': 'Login realizado com sucesso!', 'token': token}), 200
+    response = make_response(jsonify({"message": "Login bem-sucedido!"}))
+    response.set_cookie('token', token, httponly=True, secure=False, samesite='Strict')
+
+    return response, 200
+
+
+@bp.route('/logout', methods=['GET'])
+def logout():
+    response = make_response(jsonify({"message": "Logout bem-sucedido!"}))
+    
+    response.delete_cookie('token')
+    
+    return response
 
 @bp.route('/session', methods=['GET'])
 @jwt_required()

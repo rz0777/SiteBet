@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Evento{% endblock %}
+
+{% block content %}
+<h2 id="eventTitle"></h2>
+<p id="eventDescription"></p>
+<p><strong>Data do Evento:</strong> <span id="eventDate"></span></p>
+<p><strong>Status:</strong> <span id="eventStatus"></span></p>
+<p><strong>Valor da Cota:</strong> R$ <span id="eventQuota"></span></p>
+
+{% if g.current_user and g.current_user.is_moderador %}
+    <h3>Opções do Moderador</h3>
+    <form id="approveForm" method="POST" action="/events/approve/{{ event.id }}">
+        <button type="submit" class="btn btn-success">Aprovar Evento</button>
+    </form>
+
+
+    <form id="rejectForm">
+        <div class="mb-3">
+            <label for="motivo" class="form-label">Motivo da Rejeição</label>
+            <input type="text" class="form-control" id="motivo" name="motivo" required>
+        </div>
+        <button type="submit" class="btn btn-danger">Rejeitar Evento</button>
+    </form>
+{% endif %}
+
+{% if g.current_user and not g.current_user.is_moderador %}
+    <h3>Fazer uma Aposta</h3>
+    <form id="betForm">
+        <div class="mb-3">
+            <label for="betAmount" class="form-label">Valor da Aposta (R$)</label>
+            <input type="number" class="form-control" id="betAmount" required>
+        </div>
+        <div class="mb-3">
+            <label for="betType" class="form-label">Tipo de Aposta</label>
+            <select class="form-select" id="betType" required>
+                <option value="sim">Sim</option>
+                <option value="não">Não</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Apostar</button>
+    </form>
+{% else %}
+    <p>Moderadores Não Apostam</p>
+{% endif %}
+
+<script>
+const eventId = window.location.pathname.split('/').pop();
+
+async function fetchEventDetails() {
+    try {
+        const response = await fetch(`/events/details/${eventId}`);
+        if (!response.ok) {
+            throw new Error('Evento não encontrado');
+        }
+        const event = await response.json();
+        document.getElementById("eventTitle").innerText = event.titulo;
+        document.getElementById("eventDescription").innerText = event.descricao;
+        document.getElementById("eventDate").innerText = event.data_ocorrencia;
+        document.getElementById("eventStatus").innerText = event.status;
+        document.getElementById("eventQuota").innerText = event.valor_cota;
+    } catch (err) {
+        alert("Erro ao carregar detalhes do evento: " + err.message);
+    }
+}
+
+
+document.getElementById("rejectForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const motivo = document.getElementById("motivo").value;
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        alert("Token de autenticação não encontrado. Por favor, faça login.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/events/reject/${eventId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                motivo: motivo  
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("Evento rejeitado com sucesso!");
+            fetchEventDetails();  
+        } else {
+            alert(data.error || "Erro ao rejeitar evento.");
+        }
+    } catch (err) {
+        alert("Erro ao conectar com o servidor.");
+    }
+});
+
+document.getElementById("betForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const betAmount = parseFloat(document.getElementById("betAmount").value);
+    const betType = document.getElementById("betType").value;
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        alert("Token de autenticação não encontrado. Por favor, faça login.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/bets/place', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },credentials:"include",
+            body: JSON.stringify({
+                evento_id: eventId,
+                valor: betAmount,
+                tipo_aposta: betType
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("Aposta realizada com sucesso!");
+            fetchEventDetails(); 
+        } else {
+            alert(data.error || "Erro ao realizar aposta.");
+        }
+    } catch (err) {
+        alert("Erro ao conectar com o servidor.");
+    }
+});
+
+
+fetchEventDetails();
+</script>
+{% endblock %}
