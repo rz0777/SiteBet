@@ -6,4 +6,4 @@ flask db init
 flask db migrate -m "(nome)"
 flask db upgrade
 flask db downgrade
-flask db shell (executa comandos no db)
+flask shell (executa comandos no db)

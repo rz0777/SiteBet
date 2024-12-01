@@ -1,8 +1,9 @@
-from flask import Blueprint, request, jsonify, render_template, make_response
+from flask import Blueprint, request, jsonify, render_template, make_response, redirect, url_for
 from app.models import User, db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import jwt_required, create_access_token
 from datetime import timedelta, datetime
+from app.routes.home import home_view
 
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -64,7 +65,7 @@ def logout():
     
     response.delete_cookie('token')
     
-    return response
+    return response, 200
 
 @bp.route('/session', methods=['GET'])
 @jwt_required()

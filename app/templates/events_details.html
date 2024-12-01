@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+{% extends "base.html"%}
 
-{% block title %}Detalhes do Evento{% endblock %}
+{%block title %} Datalhe Evento {%endblock%}
 
 {% block content %}
 <h2 id="eventTitle"></h2>
@@ -66,78 +66,129 @@ async function fetchEventDetails() {
 }
 
 
-document.getElementById("rejectForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const motivo = document.getElementById("motivo").value;
-    const token = localStorage.getItem("token");
+const betForm = document.getElementById("betForm");
 
-    if (!token) {
-        alert("Token de autenticação não encontrado. Por favor, faça login.");
-        return;
-    }
+if (betForm) {
+    betForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const betAmount = parseFloat(document.getElementById("betAmount").value);
+        const betType = document.getElementById("betType").value;
+        const token = localStorage.getItem("token");
 
-    try {
-        const response = await fetch(`/events/reject/${eventId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                motivo: motivo  
-            })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            alert("Evento rejeitado com sucesso!");
-            fetchEventDetails();  
-        } else {
-            alert(data.error || "Erro ao rejeitar evento.");
+        if (!token) {
+            alert("Token de autenticação não encontrado. Por favor, faça login.");
+            return;
         }
-    } catch (err) {
-        alert("Erro ao conectar com o servidor.");
-    }
-});
 
-document.getElementById("betForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const betAmount = parseFloat(document.getElementById("betAmount").value);
-    const betType = document.getElementById("betType").value;
-    const token = localStorage.getItem("token");
+        try {
+            const response = await fetch('/bets/place', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    evento_id: eventId,
+                    valor: betAmount,
+                    tipo_aposta: betType
+                })
+            });
 
-    if (!token) {
-        alert("Token de autenticação não encontrado. Por favor, faça login.");
-        return;
-    }
-
-    try {
-        const response = await fetch('/bets/place', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },credentials:"include",
-            body: JSON.stringify({
-                evento_id: eventId,
-                valor: betAmount,
-                tipo_aposta: betType
-            })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            alert("Aposta realizada com sucesso!");
-            fetchEventDetails(); 
-        } else {
-            alert(data.error || "Erro ao realizar aposta.");
+            const data = await response.json();
+            if (response.ok) {
+                alert("Aposta realizada com sucesso!");
+                fetchEventDetails();
+            } else {
+                alert(data.error || "Erro ao realizar aposta.");
+            }
+        } catch (err) {
+            alert("Erro ao conectar com o servidor.");
         }
-    } catch (err) {
-        alert("Erro ao conectar com o servidor.");
-    }
-});
+    });
+}
 
+const approveForm = document.getElementById("approveForm");
 
-fetchEventDetails();
+if (approveForm) {
+    approveForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            alert("Token de autenticação não encontrado. Por favor, faça login.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/events/approve/${eventId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    evento_id: eventId
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert("Evento aprovado com sucesso!");
+                fetchEventDetails();
+                window.location.href = "/events";
+            } else {
+                alert(data.error || "Erro ao aprovar evento");
+            }
+        } catch (err) {
+            alert("Erro ao conectar com o servidor.");
+        }
+    });
+}
+
+const rejectForm = document.getElementById("rejectForm");
+
+if(rejectForm){
+
+    rejectForm.addEventListener("submit", async (e) =>{
+        e.preventDefault();
+        const motivo = document.getElementById("motivo").value;
+        const token = localStorage.getItem("token");
+
+        if(!token){
+            alert("Token de autenticação não encontrado!");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/events/reject/${eventId}`, {
+                method : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+
+                },
+                credentials:"include",
+                body: JSON.stringify({
+                    motivo:motivo
+                })
+            })
+
+            const data = await response.json();
+            if(response.ok){
+                alert('Evento rejeitado com sucesso');
+            }else{
+                alert(data.error||"Erro ao rejeitar evento");
+            }
+        }   catch(err){
+            alert("Erro ao conectar no servidor");
+        }
+    })
+}
+
+window.onload = function() {
+    fetchEventDetails();
+};
 </script>
 {% endblock %}

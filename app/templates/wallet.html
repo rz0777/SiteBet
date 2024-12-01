@@ -8,24 +8,23 @@
 <h3>Histórico de Transações</h3>
 <ul id="transactionList" class="list-group"></ul>
 
-<h3>Adicionar Fundos</h3>
-<form id="addFundsForm">
-    <div class="mb-3">
-        <label for="addAmount" class="form-label">Valor (R$)</label>
-        <input type="number" class="form-control" id="addAmount" required>
-    </div>
-    <button type="submit" class="btn btn-success">Adicionar</button>
-</form>
+<div class="d-flex justify-content-evenly align-items-start gap-1">
+    <h4>Adicionar Fundos</h4>
+    <form class="wallet" id="addFundsForm">
+        <div class="d-flex mb-3 align-self-start">
+            <input type="number" class="form-control me-2 input-sm input-wallet wallet" id="addAmount" required placeholder="Valor (R$)">
+            <button type="submit" class="btn btn-success btn-sm btn-wallet wallet">Adicionar</button>
+        </div>
+    </form>
 
-<h3>Sacar Fundos</h3>
-<form id="withdrawFundsForm">
-    <div class="mb-3">
-        <label for="withdrawAmount" class="form-label">Valor (R$)</label>
-        <input type="number" class="form-control" id="withdrawAmount" required>
-    </div>
-    <button type="submit" class="btn btn-danger">Sacar</button>
-</form>
-
+    <h4>Sacar Fundos</h4>
+    <form class="wallet" id="withdrawFundsForm">
+        <div class="d-flex mb-3 align-self-start">
+            <input type="number" class="form-control me-2 input-sm input-wallet wallet" id="withdrawAmount" required placeholder="Valor (R$)">
+            <button type="submit" class="btn btn-danger btn-sm btn-wallet wallet">Sacar</button>
+        </div>
+    </form>
+</div>
 <script>
 async function loadWallet() {
     try {

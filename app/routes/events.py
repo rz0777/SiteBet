@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
-from app.models import Event, db, User
+from app.models import Event, db, User, Bet, Transaction
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -229,7 +229,7 @@ def event_fim_view(event_id):
 @jwt_required()
 def finalize_event(event_id):
     current_user = get_jwt_identity()
-    user = User.query.get(current_user['id'])
+    user = User.query.get(current_user)
 
     
     if not user or not user.is_moderador:
@@ -258,31 +258,43 @@ def finalize_event(event_id):
 
 
 def distribute_bets(evento):
-    
     apostas = Bet.query.filter_by(evento_id=evento.id).all()
 
     if not apostas:
         return
 
-    total_apostado = sum([aposta.valor for aposta in apostas])
-    
-   
     vencedores = []
+    total_apostado_perdedores = 0
+
     for aposta in apostas:
         if (aposta.tipo_aposta == 'sim' and evento.resultado == 'sim') or \
            (aposta.tipo_aposta == 'não' and evento.resultado == 'não'):
             vencedores.append(aposta)
-    
-    if not vencedores:
-        return jsonify({'error': 'Não há vencedores para este evento'}), 400
+        else:
+            total_apostado_perdedores += aposta.valor
 
-    
+    if not vencedores:
+        return
+
+    total_apostado_vencedores = sum([vencedor.valor for vencedor in vencedores])
+
     for vencedor in vencedores:
-        percentual_vencedor = vencedor.valor / total_apostado
-        valor_ganho = percentual_vencedor * total_apostado
+        percentual_vencedor = vencedor.valor / total_apostado_vencedores
+        valor_ganho = vencedor.valor + (percentual_vencedor * total_apostado_perdedores)
+
         usuario = User.query.get(vencedor.usuario_id)
         usuario.saldo += valor_ganho
-        db.session.commit()
+
+        transacao = Transaction(
+            usuario_id=vencedor.usuario_id,
+            tipo='adicionar',
+            valor=valor_ganho,
+            detalhes='Ganhou Aposta'
+        )
+        db.session.add(transacao)
+
+
+    db.session.commit()
 
     return jsonify({'message': 'Distribuição de apostas realizada com sucesso'}), 200
 

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
-from app.models import User, Event, Bet, db
+from app.models import User, Event, Bet, db, Transaction
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 bp = Blueprint('bets', __name__, url_prefix='/bets')
@@ -43,6 +43,13 @@ def place_bet():
             valor=valor,
             tipo_aposta=data['tipo_aposta']
         )
+        transacao = Transaction(
+            usuario_id=user.id,
+            tipo='sacar',
+            valor=valor,
+            detalhes='Apostou Evento'
+        )
+        db.session.add(transacao)
         db.session.add(aposta)
         db.session.commit()
 

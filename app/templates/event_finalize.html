@@ -23,35 +23,34 @@
 {% endif %}
 
 <script>
+// Obtenha o ID do evento da URL
+const eventId = window.location.pathname.split('/').pop();
+
 document.getElementById("finalizeForm").addEventListener("submit", async (e) => {
     e.preventDefault();
+
     const result = document.getElementById("result").value;
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
-        alert("Token de autenticação não encontrado. Por favor, faça login.");
-        return;
-    }
 
     try {
         const response = await fetch(`/events/finalize/${eventId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
-            credentials:"include",
+            credentials: "include", // Inclui cookies para autenticação
             body: JSON.stringify({ resultado: result })
         });
 
-        const data = await response.json();
-        if (response.ok) {
-            alert("Evento finalizado com sucesso!");
-        } else {
-            alert(data.error || "Erro ao finalizar evento.");
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Erro ao finalizar evento.");
         }
+
+        alert("Evento finalizado com sucesso!");
+        window.location.href = "/events"; // Redireciona para a lista de eventos após a finalização
     } catch (err) {
-        alert("Erro ao conectar com o servidor.");
+        console.error("Erro:", err.message);
+        alert(err.message || "Erro ao conectar com o servidor.");
     }
 });
 </script>

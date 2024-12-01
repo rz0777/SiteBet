@@ -2,12 +2,23 @@
 
 {% block title %}Home{% endblock %}
 {% block content %}
+{% if g.current_user %}
 <div class="text-center mt-5">
-    <h1>Bem-vindo à Plataforma de Apostas!</h1>
+    <h1>Começe suas apostas!</h1>
+    <p class="lead">Explore os eventos e começe já a realizar o seu sonho</p>
+    <div>
+        <a href="{{ url_for('events.list_events_view') }}" class="btn btn-light me-2">Eventos</a>
+        <a href="{{ url_for('wallet.wallet_view') }}" class="btn btn-dark">Carteira</a>
+    </div>
+</div>
+{% else %}
+<div class="text-center mt-5">
+    <h1>Bem-vindo à Plataforma de Apostas BETAIADA!</h1>
     <p class="lead">Faça login para começar, ou explore os eventos disponíveis.</p>
     <div>
         <a href="/auth/login" class="btn btn-primary me-2">Login</a>
         <a href="/auth/signup" class="btn btn-secondary">Cadastro</a>
     </div>
 </div>
+{% endif %}
 {% endblock %}
